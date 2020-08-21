@@ -1,4 +1,7 @@
 /mp
+/mp.exe
+
+/tmp
 
 # Created by https://www.toptal.com/developers/gitignore/api/visualstudiocode,jetbrains+all,windows,linux,macos,go
 # Edit at https://www.toptal.com/developers/gitignore?templates=visualstudiocode,jetbrains+all,windows,linux,macos,go
