@@ -37,5 +37,3 @@ jobs:
           registry: docker.pkg.github.com
           repository: martinplaner/mp/mp
           tags: latest
-          tag_with_ref: true
-          tag_with_sha: true
