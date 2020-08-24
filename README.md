@@ -31,3 +31,11 @@ Copyright 2020 Martin Planer. All rights reserved. Use of this source code is go
 ### Word list
 
 Korpusbasierte Wortgrundformenliste DEREWO, v-ww-bll-320000g-2012-12-31-1.0, mit Benutzerdokumentation, http://www.ids-mannheim.de/derewo, © Institut für Deutsche Sprache, Programmbereich Korpuslinguistik, Mannheim, Deutschland, 2013.
+
+### Twemoji (Favicon)
+
+Copyright 2019 Twitter, Inc and other contributors. 
+
+Code licensed under the MIT License: <http://opensource.org/licenses/MIT>
+
+Graphics licensed under CC-BY 4.0: <https://creativecommons.org/licenses/by/4.0/>

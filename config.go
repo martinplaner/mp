@@ -8,6 +8,7 @@ import (
 
 // Config holds the global program configuration (parsed from command line flags and environment variables).
 type Config struct {
+	Debug  bool
 	File   string
 	Listen string
 }
@@ -20,6 +21,7 @@ func loadConfig() (*Config, error) {
 
 	c := &Config{}
 
+	flag.BoolVar(&c.Debug, "debug", false, "Enable verbose debug mode")
 	flag.StringVar(&c.File, "file", "words.txt", "Path to word list (one word per line)")
 	flag.StringVar(&c.Listen, "listen", fmt.Sprintf(":%s", port), "TCP address for the server to listen on, in the form 'host:port'")
 	flag.Parse()

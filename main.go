@@ -1,5 +1,7 @@
 package main
 
+//go:generate go run assets_generate.go assets.go
+
 import (
 	"context"
 	"net/http"
@@ -38,7 +40,12 @@ func main() {
 		zap.String("listen", config.Listen),
 	)
 
+	if !config.Debug {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
 	router := gin.New()
+
 	ginLogger := logger.Named("gin")
 	router.Use(ginzap.Ginzap(ginLogger, time.RFC3339, true))
 	router.Use(ginzap.RecoveryWithZap(ginLogger, true))
@@ -49,6 +56,7 @@ func main() {
 		logger.Fatal("failed to create generator", zap.Error(err))
 	}
 	router.GET("/", handlerWithGenerator(generator))
+	router.StaticFS("/_assets", assets)
 
 	srv := &http.Server{
 		Addr:    config.Listen,
