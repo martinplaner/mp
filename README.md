@@ -14,6 +14,8 @@ All this effort for a stupid inside joke. Don't worry if you don't get it, it's 
 
 ```
 Usage of mp:
+  -debug
+        Enable verbose debug mode
   -file string
         Path to word list (one word per line) (default "words.txt")
   -listen string
@@ -21,6 +23,15 @@ Usage of mp:
 ```
 
 The `PORT` environment variable can also be used to set the default listening port.
+
+### Docker
+
+A Docker image is available through GitHub Packages: https://github.com/martinplaner/mp/packages 
+
+```
+$ docker login docker.pkg.github.com // Login is required to pull from GitHub Packages :-/
+$ docker run -it --rm -v $PWD/words.txt:/data/words.txt -p 8080:8080 docker.pkg.github.com/martinplaner/mp/mp:latest
+```
 
 ## Licenses
 
