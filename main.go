@@ -1,17 +1,12 @@
 package main
 
-//go:generate go run generate.go assets.go templates.go
+//go:generate go run generate.go assets.go
 
 import (
-	"context"
 	"html/template"
 	"io/ioutil"
-	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 
+	ginzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
@@ -36,26 +31,20 @@ func main() {
 		logger.Fatal("failed to load config", zap.Error(err))
 	}
 
-	logger.Info("effective configuration",
+	logger.Info("configuration",
 		zap.Reflect("config", config),
 	)
 
 	router := configureGin(config)
+	router.StaticFS("/_assets/", assets)
 
 	generator, err := GeneratorFromFile(config.File, "-")
 	if err != nil {
 		logger.Fatal("failed to create generator", zap.Error(err))
 	}
-	router.GET("/", handlerWithGenerator(generator))
-	router.StaticFS("/_assets/", assets)
+	router.NoRoute(handlerWithGenerator(generator))
 
-	srv := &http.Server{
-		// TODO handle timeouts?
-		Addr:    config.Listen,
-		Handler: router,
-	}
-
-	runServer(srv)
+	router.Run(config.Listen)
 }
 
 func configureGin(config *Config) *gin.Engine {
@@ -63,7 +52,9 @@ func configureGin(config *Config) *gin.Engine {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	router := gin.Default()
+	router := gin.New()
+	ginLogger := logger.Named("gin")
+	router.Use(ginzap.RecoveryWithZap(ginLogger, true))
 
 	t, err := loadTemplate("index.tmpl")
 	if err != nil {
@@ -75,7 +66,7 @@ func configureGin(config *Config) *gin.Engine {
 }
 
 func loadTemplate(name string) (*template.Template, error) {
-	file, err := templates.Open(name)
+	file, err := assets.Open("templates/" + name)
 	if err != nil {
 		logger.Fatal("failed to load template", zap.String("name", name), zap.Error(err))
 	}
@@ -91,23 +82,4 @@ func loadTemplate(name string) (*template.Template, error) {
 	}
 
 	return t, nil
-}
-
-func runServer(srv *http.Server) {
-	go func() {
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.Fatal("listen failed", zap.Error(err))
-		}
-	}()
-
-	quit := make(chan os.Signal)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-
-	logger.Info("server shutting down...")
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if err := srv.Shutdown(ctx); err != nil {
-		logger.Fatal("graceful shutdown failed", zap.Error(err))
-	}
 }
