@@ -10,17 +10,16 @@ ENV GOOS=linux
 ENV GOARCH=amd64
 ENV CGO_ENABLED=0
 
-RUN go build -ldflags="-s -w"
+RUN go get -v -t -d ./...
+RUN go generate -v .
+RUN go build -ldflags="-s -w" -tags release -v .
 
 
 FROM alpine
 
 WORKDIR /app/
 
-ENV GIN_MODE=release
-
 COPY --from=build-env /go/src/github.com/martinplaner/mp/mp /app/
-COPY --from=build-env /go/src/github.com/martinplaner/mp/templates/*.* /app/templates/
 
 USER nobody
 ENTRYPOINT [ "/app/mp", "-file", "/data/words.txt" ]
