@@ -10,34 +10,54 @@ import (
 	"github.com/gin-gonic/gin/binding"
 )
 
-type queryParams struct {
-	Query string `form:"q,default=mp"`
+var (
+	// DefaultQuery is used if no other query was specified
+	DefaultQuery = "mp"
+)
+
+// QueryResult contains the query as well as the result value of a single request
+type QueryResult struct {
+	Query  string `json:"query"`
+	Result string `json:"result"`
+}
+
+// Error holds useful information in case of an error
+type Error struct {
+	Message string `json:"message"`
+	Cause   string `json:"cause"`
 }
 
 func handlerWithGenerator(g *Generator) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var params queryParams
-		c.BindQuery(&params)
+		query := strings.TrimSpace(strings.TrimPrefix(c.Request.URL.Path, "/"))
 
-		if len(params.Query) < 1 || len(params.Query) > 20 {
-			c.AbortWithStatus(http.StatusBadRequest)
+		if strings.Contains(query, "/") || len(query) > 20 {
+			c.AbortWithStatusJSON(http.StatusBadRequest, &Error{
+				Message: "invalid query",
+			})
 			return
+		} else if query == "" {
+			query = DefaultQuery
 		}
 
-		word, err := g.Generate(strings.ToUpper(params.Query))
+		result, err := g.Generate(strings.ToUpper(query))
 		if err != nil {
-			fmt.Println(err)
-			c.AbortWithError(http.StatusInternalServerError, err)
+			c.AbortWithStatusJSON(http.StatusInternalServerError, &Error{
+				Message: fmt.Sprintf("could not generate word for '%v' query", query),
+				Cause:   err.Error(),
+			})
 			return
 		}
+
+		queryResult := &QueryResult{Query: query, Result: result}
 
 		switch c.NegotiateFormat(gin.MIMEPlain, gin.MIMEHTML, gin.MIMEJSON) {
 		case binding.MIMEPlain:
-			c.String(http.StatusOK, word)
+			c.String(http.StatusOK, queryResult.Result)
 		case binding.MIMEJSON:
-			c.JSON(http.StatusOK, gin.H{"query": params.Query, "word": word})
+			c.JSON(http.StatusOK, queryResult)
 		case binding.MIMEHTML:
-			c.HTML(http.StatusOK, "index.tmpl", gin.H{"Word": word})
+			c.HTML(http.StatusOK, "index.tmpl", queryResult)
 		default:
 			c.AbortWithError(http.StatusNotAcceptable, errors.New("the target resource does not have a current representation that would be acceptable to the user agent"))
 		}
