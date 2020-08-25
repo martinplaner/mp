@@ -14,6 +14,8 @@ All this effort for a stupid inside joke. Don't worry if you don't get it, it's 
 
 ```
 Usage of mp:
+  -debug
+        Enable verbose debug mode
   -file string
         Path to word list (one word per line) (default "words.txt")
   -listen string
@@ -21,6 +23,15 @@ Usage of mp:
 ```
 
 The `PORT` environment variable can also be used to set the default listening port.
+
+### Docker
+
+A Docker image is available through GitHub Packages: https://github.com/martinplaner/mp/packages 
+
+```
+$ docker login docker.pkg.github.com // Login is required to pull from GitHub Packages :-/
+$ docker run -it --rm -v $PWD/words.txt:/data/words.txt -p 8080:8080 docker.pkg.github.com/martinplaner/mp/mp:latest
+```
 
 ## Licenses
 
@@ -31,3 +42,11 @@ Copyright 2020 Martin Planer. All rights reserved. Use of this source code is go
 ### Word list
 
 Korpusbasierte Wortgrundformenliste DEREWO, v-ww-bll-320000g-2012-12-31-1.0, mit Benutzerdokumentation, http://www.ids-mannheim.de/derewo, © Institut für Deutsche Sprache, Programmbereich Korpuslinguistik, Mannheim, Deutschland, 2013.
+
+### Twemoji (Favicon)
+
+Copyright 2019 Twitter, Inc and other contributors. 
+
+Code licensed under the MIT License: <http://opensource.org/licenses/MIT>
+
+Graphics licensed under CC-BY 4.0: <https://creativecommons.org/licenses/by/4.0/>
