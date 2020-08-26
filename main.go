@@ -4,71 +4,87 @@ package main
 
 import (
 	"html/template"
+	"io"
 	"io/ioutil"
+	"log"
+	"net/http"
 
-	ginzap "github.com/gin-contrib/zap"
-	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"go.uber.org/zap"
 )
 
-var (
-	logger *zap.Logger
-)
+type CustomValidator struct {
+	validator *validator.Validate
+}
 
-func init() {
-	var err error
-	logger, err = zap.NewProduction()
-	if err != nil {
-		panic(err)
+func (cv *CustomValidator) Validate(i interface{}) error {
+	return cv.validator.Struct(i)
+}
+
+type CustomRenderer struct {
+	templates *template.Template
+}
+
+func (r *CustomRenderer) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
+	accept := c.Request().Header.Get("Accept")
+
+	if accept == "text/plain" {
+		return c.String(http.StatusOK, "plain")
 	}
+
+	return c.JSON(http.StatusOK, data)
 }
 
 func main() {
-	defer logger.Sync()
 
 	config, err := loadConfig()
 	if err != nil {
-		logger.Fatal("failed to load config", zap.Error(err))
+		log.Fatal("failed to load config", zap.Error(err))
 	}
 
-	logger.Info("configuration",
-		zap.Reflect("config", config),
-	)
+	log.Printf("Configuration: %#v\n", config)
 
-	router := configureGin(config)
-	router.StaticFS("/_assets/", assets)
+	e := echo.New()
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
+	e.Use(middleware.RequestID())
 
-	generator, err := GeneratorFromFile(config.File, "-")
-	if err != nil {
-		logger.Fatal("failed to create generator", zap.Error(err))
-	}
-	router.NoRoute(handlerWithGenerator(generator))
+	e.Validator = &CustomValidator{validator: validator.New()}
+	e.Renderer = &CustomRenderer{}
 
-	router.Run(config.Listen)
+	e.Static("/_assets", "assets")
+	e.GET("/:query", queryHandler)
+
+	// generator, err := GeneratorFromFile(config.File, "-")
+	// if err != nil {
+	// 	logger.Fatal("failed to create generator", zap.Error(err))
+	// }
+
+	e.Logger.Fatal(e.Start(config.Listen))
 }
 
-func configureGin(config *Config) *gin.Engine {
-	if !config.Debug {
-		gin.SetMode(gin.ReleaseMode)
+type Request struct {
+	Query string `param:"query" validate:"required,min=1,max=20"`
+}
+
+func queryHandler(c echo.Context) error {
+	req := new(Request)
+	if err := c.Bind(req); err != nil {
+		return err
 	}
-
-	router := gin.New()
-	ginLogger := logger.Named("gin")
-	router.Use(ginzap.RecoveryWithZap(ginLogger, true))
-
-	t, err := loadTemplate("index.tmpl")
-	if err != nil {
-		logger.Fatal("failed to load templates", zap.Error(err))
+	if err := c.Validate(req); err != nil {
+		return err
 	}
-	router.SetHTMLTemplate(t)
-
-	return router
+	return c.Render(http.StatusOK, "index", req.Query)
+	// return c.JSON(http.StatusOK, req.Query)
 }
 
 func loadTemplate(name string) (*template.Template, error) {
 	file, err := assets.Open("templates/" + name)
 	if err != nil {
-		logger.Fatal("failed to load template", zap.String("name", name), zap.Error(err))
+		return nil, err
 	}
 	defer file.Close()
 
