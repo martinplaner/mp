@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
@@ -66,7 +67,7 @@ func main() {
 }
 
 type Request struct {
-	Query string `param:"query" validate:"required,min=1,max=20"`
+	Query string `param:"query" validate:"required,alphaunicode,min=1,max=20"`
 }
 
 func queryHandler(c echo.Context) error {
@@ -77,6 +78,14 @@ func queryHandler(c echo.Context) error {
 	if err := c.Validate(req); err != nil {
 		return err
 	}
+
+	if strings.Contains(req.Query, "a") {
+		return &echo.HTTPError{
+			Code:    http.StatusBadRequest,
+			Message: "query must not contain 'a'",
+		}
+	}
+
 	return c.Render(http.StatusOK, "index", req.Query)
 	// return c.JSON(http.StatusOK, req.Query)
 }
