@@ -23,11 +23,8 @@ jobs:
       - name: Get dependencies
         run: go get -v -t -d ./...
 
-      - name: Generate code and embed assets
-        run: go generate -v .
-
       - name: Build
-        run: go build -ldflags="-s -w" -tags release -v .
+        run: go build -ldflags="-s -w" -v .
 
       - name: Test
         run: go test -v .
