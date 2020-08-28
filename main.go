@@ -11,11 +11,6 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 )
 
-var (
-	assetsBox    = rice.MustFindBox("assets")
-	templatesBox = rice.MustFindBox("templates")
-)
-
 func main() {
 	config, err := loadConfig()
 	if err != nil {
@@ -23,11 +18,28 @@ func main() {
 	}
 	log.Printf("Configuration: %#v\n", config)
 
+	assetsBox, err := rice.FindBox("assets")
+	if err != nil {
+		log.Fatalf("failed to load assets box: %v", err)
+	}
+	log.Printf("Assets: appended=%v, embedded=%v", assetsBox.IsAppended(), assetsBox.IsEmbedded())
+
+	templatesBox, err := rice.FindBox("templates")
+	if err != nil {
+		log.Fatalf("failed to templates assets box: %v", err)
+	}
+	log.Printf("Templates: appended=%v, embedded=%v", templatesBox.IsAppended(), templatesBox.IsEmbedded())
+
 	t, err := loadTemplates(templatesBox)
 	if err != nil {
 		log.Fatalf("failed to load templates: %v", err)
 	}
 	log.Printf("Loaded templates%v\n", t.DefinedTemplates())
+
+	generator, err := GeneratorFromFile(config.File, "-")
+	if err != nil {
+		log.Fatalf("failed to create generator: %v", err)
+	}
 
 	e := echo.New()
 	e.Use(middleware.Logger())
@@ -36,11 +48,6 @@ func main() {
 
 	e.Validator = NewValidator()
 	e.Renderer = NewRenderer(t)
-
-	generator, err := GeneratorFromFile(config.File, "-")
-	if err != nil {
-		log.Fatalf("failed to create generator: %v", err)
-	}
 
 	e.GET("/", defaultHandler(generator))
 	e.GET("/:query", queryHandler(generator))
