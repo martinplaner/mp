@@ -1,110 +1,94 @@
 package main
 
-//go:generate go run generate.go assets.go
+//go:generate rice embed-go
 
 import (
+	"fmt"
 	"html/template"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
-	"strings"
+	"os"
+	"path/filepath"
 
-	"github.com/go-playground/validator/v10"
+	rice "github.com/GeertJohan/go.rice"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"go.uber.org/zap"
 )
 
-type CustomValidator struct {
-	validator *validator.Validate
-}
-
-func (cv *CustomValidator) Validate(i interface{}) error {
-	return cv.validator.Struct(i)
-}
-
-type CustomRenderer struct {
-	templates *template.Template
-}
-
-func (r *CustomRenderer) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
-	accept := c.Request().Header.Get("Accept")
-
-	if accept == "text/plain" {
-		return c.String(http.StatusOK, "plain")
-	}
-
-	return c.JSON(http.StatusOK, data)
-}
+var (
+	assets = rice.MustFindBox("assets")
+)
 
 func main() {
-
 	config, err := loadConfig()
 	if err != nil {
-		log.Fatal("failed to load config", zap.Error(err))
+		log.Fatalf("failed to load config: %v", err)
 	}
-
 	log.Printf("Configuration: %#v\n", config)
+
+	t, err := loadTemplates()
+	if err != nil {
+		log.Fatalf("failed to load templates: %v", err)
+	}
+	log.Printf("Loaded templates%v\n", t.DefinedTemplates())
 
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.Use(middleware.RequestID())
 
-	e.Validator = &CustomValidator{validator: validator.New()}
-	e.Renderer = &CustomRenderer{}
+	e.Validator = NewValidator()
+	e.Renderer = NewRenderer(t)
 
-	e.Static("/_assets", "assets")
-	e.GET("/:query", queryHandler)
+	generator, err := GeneratorFromFile(config.File, "-")
+	if err != nil {
+		log.Fatalf("failed to create generator: %v", err)
+	}
 
-	// generator, err := GeneratorFromFile(config.File, "-")
-	// if err != nil {
-	// 	logger.Fatal("failed to create generator", zap.Error(err))
-	// }
+	err = assets.Walk("/", func(path string, info os.FileInfo, err error) error {
+		fmt.Println(path)
+		return nil
+	})
+
+	e.GET("/", defaultHandler(generator))
+	e.GET("/:query", queryHandler(generator))
+	e.GET("/_assets/*", echo.WrapHandler(http.StripPrefix("/_assets/", http.FileServer(assets.HTTPBox()))))
+	e.GET("/favicon.ico", func(c echo.Context) error {
+		return c.Redirect(http.StatusMovedPermanently, "/_assets/favicons/favicon.ico")
+	})
 
 	e.Logger.Fatal(e.Start(config.Listen))
 }
 
-type Request struct {
-	Query string `param:"query" validate:"required,alphaunicode,min=1,max=20"`
-}
-
-func queryHandler(c echo.Context) error {
-	req := new(Request)
-	if err := c.Bind(req); err != nil {
-		return err
-	}
-	if err := c.Validate(req); err != nil {
-		return err
-	}
-
-	if strings.Contains(req.Query, "a") {
-		return &echo.HTTPError{
-			Code:    http.StatusBadRequest,
-			Message: "query must not contain 'a'",
+func loadTemplates() (*template.Template, error) {
+	t := template.New("")
+	err := assets.Walk("/", func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
 		}
-	}
+		if info.IsDir() {
+			return nil
+		}
 
-	return c.Render(http.StatusOK, "index", req.Query)
-	// return c.JSON(http.StatusOK, req.Query)
-}
-
-func loadTemplate(name string) (*template.Template, error) {
-	file, err := assets.Open("templates/" + name)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	h, err := ioutil.ReadAll(file)
-	if err != nil {
-		return nil, err
-	}
-	t, err := template.New(name).Parse(string(h))
-	if err != nil {
-		return nil, err
-	}
-
-	return t, nil
+		baseName := filepath.Base(path)
+		if _, err := filepath.Match("*.tmpl", baseName); err != nil {
+			return err
+		}
+		file, err := assets.Open(path)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+		h, err := ioutil.ReadAll(file)
+		if err != nil {
+			return err
+		}
+		t, err = template.New(baseName).Parse(string(h))
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	return t, err
 }
