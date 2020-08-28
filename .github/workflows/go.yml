@@ -23,17 +23,15 @@ jobs:
       - name: Get dependencies
         run: go get -v -t -d ./...
 
-      - name: Generate code and embed assets
-        run: go generate -v .
-
       - name: Build
-        run: go build -ldflags="-s -w" -tags release -v .
+        run: go build -ldflags="-s -w" -v .
 
       - name: Test
         run: go test -v .
 
       - name: Build and push Docker images to GitHub Packages
         uses: docker/build-push-action@v1
+        if: ${{ github.event_name == 'push' && github.ref == 'master' }}
         with:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}

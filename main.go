@@ -1,85 +1,58 @@
 package main
 
-//go:generate go run generate.go assets.go
+//go:generate rice embed-go
 
 import (
-	"html/template"
-	"io/ioutil"
+	"log"
+	"net/http"
 
-	ginzap "github.com/gin-contrib/zap"
-	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
+	rice "github.com/GeertJohan/go.rice"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
-
-var (
-	logger *zap.Logger
-)
-
-func init() {
-	var err error
-	logger, err = zap.NewProduction()
-	if err != nil {
-		panic(err)
-	}
-}
 
 func main() {
-	defer logger.Sync()
-
 	config, err := loadConfig()
 	if err != nil {
-		logger.Fatal("failed to load config", zap.Error(err))
+		log.Fatalf("failed to load config: %v", err)
 	}
+	log.Printf("Configuration: %#v\n", config)
 
-	logger.Info("configuration",
-		zap.Reflect("config", config),
-	)
+	assetsBox, err := rice.FindBox("assets")
+	if err != nil {
+		log.Fatalf("failed to load assets box: %v", err)
+	}
+	log.Printf("Assets: appended=%v, embedded=%v", assetsBox.IsAppended(), assetsBox.IsEmbedded())
 
-	router := configureGin(config)
-	router.StaticFS("/_assets/", assets)
+	templatesBox, err := rice.FindBox("templates")
+	if err != nil {
+		log.Fatalf("failed to templates assets box: %v", err)
+	}
+	log.Printf("Templates: appended=%v, embedded=%v", templatesBox.IsAppended(), templatesBox.IsEmbedded())
+
+	t, err := loadTemplates(templatesBox)
+	if err != nil {
+		log.Fatalf("failed to load templates: %v", err)
+	}
+	log.Printf("Loaded templates%v\n", t.DefinedTemplates())
 
 	generator, err := GeneratorFromFile(config.File, "-")
 	if err != nil {
-		logger.Fatal("failed to create generator", zap.Error(err))
-	}
-	router.NoRoute(handlerWithGenerator(generator))
-
-	router.Run(config.Listen)
-}
-
-func configureGin(config *Config) *gin.Engine {
-	if !config.Debug {
-		gin.SetMode(gin.ReleaseMode)
+		log.Fatalf("failed to create generator: %v", err)
 	}
 
-	router := gin.New()
-	ginLogger := logger.Named("gin")
-	router.Use(ginzap.RecoveryWithZap(ginLogger, true))
+	e := echo.New()
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
+	e.Use(middleware.RequestID())
 
-	t, err := loadTemplate("index.tmpl")
-	if err != nil {
-		logger.Fatal("failed to load templates", zap.Error(err))
-	}
-	router.SetHTMLTemplate(t)
+	e.Validator = NewValidator()
+	e.Renderer = NewRenderer(t)
 
-	return router
-}
+	e.GET("/", defaultHandler(generator))
+	e.GET("/:query", queryHandler(generator))
+	e.GET("/_assets/*", echo.WrapHandler(http.StripPrefix("/_assets/", http.FileServer(assetsBox.HTTPBox()))))
+	e.GET("/favicon.ico", redirectHandler("/_assets/favicons/favicon.ico"))
 
-func loadTemplate(name string) (*template.Template, error) {
-	file, err := assets.Open("templates/" + name)
-	if err != nil {
-		logger.Fatal("failed to load template", zap.String("name", name), zap.Error(err))
-	}
-	defer file.Close()
-
-	h, err := ioutil.ReadAll(file)
-	if err != nil {
-		return nil, err
-	}
-	t, err := template.New(name).Parse(string(h))
-	if err != nil {
-		return nil, err
-	}
-
-	return t, nil
+	e.Logger.Fatal(e.Start(config.Listen))
 }

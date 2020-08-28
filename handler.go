@@ -1,24 +1,26 @@
 package main
 
 import (
-	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 
-	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
+	"github.com/labstack/echo/v4"
 )
 
 var (
 	// DefaultQuery is used if no other query was specified
-	DefaultQuery = "mp"
+	DefaultQuery = "MP"
 )
+
+// RequestParams contains all request parameters
+type RequestParams struct {
+	Query string `param:"query" validate:"required,alphaunicode,min=1,max=20"`
+}
 
 // QueryResult contains the query as well as the result value of a single request
 type QueryResult struct {
 	Query  string `json:"query"`
-	Result string `json:"result"`
+	Result string `json:"result" plain:"-"`
 }
 
 // Error holds useful information in case of an error
@@ -27,39 +29,39 @@ type Error struct {
 	Cause   string `json:"cause"`
 }
 
-func handlerWithGenerator(g *Generator) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		query := strings.TrimSpace(strings.TrimPrefix(c.Request.URL.Path, "/"))
-
-		if strings.Contains(query, "/") || len(query) > 20 {
-			c.AbortWithStatusJSON(http.StatusBadRequest, &Error{
-				Message: "invalid query",
-			})
-			return
-		} else if query == "" {
-			query = DefaultQuery
-		}
-
-		result, err := g.Generate(strings.ToUpper(query))
+func defaultHandler(g *Generator) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		result, err := g.Generate(strings.ToUpper(DefaultQuery))
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, &Error{
-				Message: fmt.Sprintf("could not generate word for '%v' query", query),
-				Cause:   err.Error(),
-			})
-			return
+			return err
 		}
 
-		queryResult := &QueryResult{Query: query, Result: result}
+		return c.Render(http.StatusOK, "index.tmpl", &QueryResult{Query: DefaultQuery, Result: result})
+	}
+}
 
-		switch c.NegotiateFormat(gin.MIMEPlain, gin.MIMEHTML, gin.MIMEJSON) {
-		case binding.MIMEPlain:
-			c.String(http.StatusOK, queryResult.Result)
-		case binding.MIMEJSON:
-			c.JSON(http.StatusOK, queryResult)
-		case binding.MIMEHTML:
-			c.HTML(http.StatusOK, "index.tmpl", queryResult)
-		default:
-			c.AbortWithError(http.StatusNotAcceptable, errors.New("the target resource does not have a current representation that would be acceptable to the user agent"))
+func queryHandler(g *Generator) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		req := new(RequestParams)
+		if err := c.Bind(req); err != nil {
+			return err
 		}
+		if err := c.Validate(req); err != nil {
+			return err
+		}
+
+		query := strings.ToUpper(req.Query)
+		result, err := g.Generate(query)
+		if err != nil {
+			return err
+		}
+
+		return c.Render(http.StatusOK, "index.tmpl", &QueryResult{Query: query, Result: result})
+	}
+}
+
+func redirectHandler(target string) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		return c.Redirect(http.StatusMovedPermanently, target)
 	}
 }
