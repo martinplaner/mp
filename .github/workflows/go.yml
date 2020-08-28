@@ -3,8 +3,6 @@ name: Go
 on:
   push:
     branches: [master]
-  pull_request:
-    branches: [master]
 
 jobs:
   build:
@@ -31,7 +29,6 @@ jobs:
 
       - name: Build and push Docker images to GitHub Packages
         uses: docker/build-push-action@v1
-        if: ${{ github.event_name == 'push' && github.ref == 'master' }}
         with:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
