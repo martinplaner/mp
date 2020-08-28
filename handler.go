@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -53,7 +54,11 @@ func queryHandler(g *Generator) echo.HandlerFunc {
 		query := strings.ToUpper(req.Query)
 		result, err := g.Generate(query)
 		if err != nil {
-			return err
+			return &echo.HTTPError{
+				Code:     http.StatusNotFound,
+				Message:  fmt.Sprintf("Could not generate word for query '%v'.", query),
+				Internal: err,
+			}
 		}
 
 		return c.Render(http.StatusOK, "index.tmpl", &QueryResult{Query: query, Result: result})
