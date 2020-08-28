@@ -22,6 +22,7 @@ const (
 )
 
 var (
+	// ErrNotAcceptable is returned when no acceptable representation can be found.
 	ErrNotAcceptable = &echo.HTTPError{
 		Code:    http.StatusNotAcceptable,
 		Message: "The target resource does not have a current representation that would be acceptable to the user agent.",
