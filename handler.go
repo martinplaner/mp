@@ -59,3 +59,9 @@ func queryHandler(g *Generator) echo.HandlerFunc {
 		return c.Render(http.StatusOK, "index.tmpl", &QueryResult{Query: query, Result: result})
 	}
 }
+
+func redirectHandler(target string) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		return c.Redirect(http.StatusMovedPermanently, target)
+	}
+}
