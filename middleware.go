@@ -1,12 +1,10 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"html/template"
 	"io"
 	"net/http"
-	"reflect"
 	"strings"
 
 	"github.com/go-playground/validator/v10"
@@ -55,12 +53,18 @@ func NewValidator() *Validator {
 	return &Validator{validator: validator.New()}
 }
 
-// Renderer is a custom renderer implementation for different content types
+// Renderer is a custom renderer implementation for template based HTML responses
 type Renderer struct {
 	templates *template.Template
 }
 
 func (r *Renderer) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
+	return r.templates.ExecuteTemplate(w, name, data)
+}
+
+// Negotiate performs content negotiation using the "Accept" header and sends a response in the appropriate content type.
+// If not content type can be negotiated, an HTTP 406 Not Acceptable error is returned.
+func Negotiate(status int, name string, data interface{}, c echo.Context) error {
 	accept := c.Request().Header.Get(http.CanonicalHeaderKey(echo.HeaderAccept))
 	var accepts []string
 	for _, a := range strings.Split(accept, ",") {
@@ -70,54 +74,23 @@ func (r *Renderer) Render(w io.Writer, name string, data interface{}, c echo.Con
 	for _, a := range accepts {
 		// Plain text (default)
 		if strings.HasPrefix(a, MIMETextPlain) || strings.HasPrefix(a, MIMEAny) {
-			s, err := plainText(data)
-			if err != nil {
-				return err
+			if stringer, ok := data.(fmt.Stringer); ok {
+				return c.String(status, stringer.String())
 			}
-			_, err = w.Write([]byte(s))
-			return nil
 		}
 
 		// JSON
 		if strings.HasPrefix(a, MIMEApplicationJSON) {
-			b, err := json.Marshal(data)
-			if err != nil {
-				return err
-			}
-			_, err = w.Write(b)
-			return err
+			return c.JSON(status, data)
 		}
 
 		// HTML
 		if strings.HasPrefix(a, MIMETextHTML) {
-			return r.templates.ExecuteTemplate(w, name, data)
+			return c.Render(status, name, data)
 		}
 	}
 
 	return ErrNotAcceptable
-}
-
-func plainText(data interface{}) (string, error) {
-	val := reflect.ValueOf(data)
-	typ := val.Type()
-
-	if typ.Kind() == reflect.Ptr {
-		val = val.Elem()
-		typ = val.Type()
-	}
-
-	if typ.Kind() != reflect.Struct {
-		return "", fmt.Errorf("data not of type struct (got %v)", typ.Kind())
-	}
-
-	for i := 0; i < typ.NumField(); i++ {
-		f := typ.Field(i)
-		if _, ok := f.Tag.Lookup("plain"); ok {
-			return val.Field(i).String(), nil
-		}
-	}
-
-	return "", ErrNotAcceptable
 }
 
 func NewRenderer(t *template.Template) *Renderer {
