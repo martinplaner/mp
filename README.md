@@ -1,5 +1,7 @@
 # mp
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/martinplaner/mp)](https://goreportcard.com/report/github.com/martinplaner/mp)
+
 Highly sophisticated [initialism](https://en.wikipedia.org/wiki/Acronym#Nomenclature) to hyphenated [compound words](https://en.wikipedia.org/wiki/Compound_(linguistics)) generator.
 
 ## Example
