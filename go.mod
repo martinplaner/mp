@@ -5,7 +5,7 @@ go 1.15
 require (
 	github.com/GeertJohan/go.rice v1.0.0
 	github.com/daaku/go.zipexe v1.0.1 // indirect
-	github.com/go-playground/validator/v10 v10.3.0
+	github.com/go-playground/validator/v10 v10.4.0
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/labstack/echo/v4 v4.1.17
 	golang.org/x/sys v0.0.0-20200828081204-131dc92a58d5 // indirect
