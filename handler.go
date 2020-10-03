@@ -21,7 +21,12 @@ type RequestParams struct {
 // QueryResult contains the query as well as the result value of a single request
 type QueryResult struct {
 	Query  string `json:"query"`
-	Result string `json:"result" plain:"-"`
+	Result string `json:"result"`
+}
+
+// String implements fmt.Stringer used for plain text responses
+func (r QueryResult) String() string {
+	return r.Result
 }
 
 // Error holds useful information in case of an error
@@ -37,7 +42,7 @@ func defaultHandler(g *Generator) echo.HandlerFunc {
 			return err
 		}
 
-		return c.Render(http.StatusOK, "index.tmpl", &QueryResult{Query: DefaultQuery, Result: result})
+		return Negotiate(http.StatusOK, "index.tmpl", &QueryResult{Query: DefaultQuery, Result: result}, c)
 	}
 }
 
@@ -60,8 +65,7 @@ func queryHandler(g *Generator) echo.HandlerFunc {
 				Internal: err,
 			}
 		}
-
-		return c.Render(http.StatusOK, "index.tmpl", &QueryResult{Query: query, Result: result})
+		return Negotiate(http.StatusOK, "index.tmpl", &QueryResult{Query: query, Result: result}, c)
 	}
 }
 
