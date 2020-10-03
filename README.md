@@ -28,12 +28,13 @@ The `PORT` environment variable can also be used to set the default listening po
 
 ### Docker
 
-A Docker image is available through GitHub Packages: https://github.com/martinplaner/mp/packages 
+A Docker image is available through Docker Hub: https://hub.docker.com/r/martinplaner/mp 
 
 ```
-$ docker login docker.pkg.github.com // Login is required to pull from GitHub Packages :-/
-$ docker run -it --rm -v $PWD/words.txt:/data/words.txt -p 8080:8080 docker.pkg.github.com/martinplaner/mp/mp:latest
+$ docker run -it --rm -v $PWD/words.txt:/data/words.txt -p 8080:8080 martinplaner/mp:latest
 ```
+
+⚠ Don't use the old image from GitHub Packages Docker Registry (aka docker.pkg.github.com), since it is deprecated and this registry will sunset early next year. Unfortunately it is not possible to delete public images from GitHub Packages, so just be aware.
 
 ## Licenses
 
