@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	rice "github.com/GeertJohan/go.rice"
+	"github.com/labstack/echo-contrib/prometheus"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -45,6 +46,9 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.Use(middleware.RequestID())
+
+	p := prometheus.NewPrometheus("mp", nil)
+	p.Use(e)
 
 	e.Validator = NewValidator()
 	e.Renderer = NewRenderer(t)
