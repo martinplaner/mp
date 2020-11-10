@@ -48,6 +48,7 @@ func main() {
 	e.Use(middleware.RequestID())
 
 	p := prometheus.NewPrometheus("mp", nil)
+	p.MetricsPath = "_metrics"
 	p.Use(e)
 
 	e.Validator = NewValidator()
