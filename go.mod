@@ -3,7 +3,7 @@ module github.com/martinplaner/mp
 go 1.15
 
 require (
-	github.com/GeertJohan/go.rice v1.0.0
+	github.com/GeertJohan/go.rice v1.0.1
 	github.com/daaku/go.zipexe v1.0.1 // indirect
 	github.com/go-playground/validator/v10 v10.4.1
 	github.com/kr/pretty v0.1.0 // indirect
