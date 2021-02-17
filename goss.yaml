@@ -1,0 +1,18 @@
+file:
+  /data/words.txt:
+    exists: true
+port:
+  tcp6:8080:
+    listening: true
+process:
+  mp:
+    running: true
+http:
+  http://localhost:8080/:
+    status: 200
+    timeout: 5000
+    request-headers: # Set request header values
+       - "Accept: application/json"
+    body:
+    - "query"
+    - "result"
