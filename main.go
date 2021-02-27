@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 
-	rice "github.com/GeertJohan/go.rice"
 	"github.com/labstack/echo-contrib/prometheus"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -19,19 +18,12 @@ func main() {
 	}
 	log.Printf("Configuration: %#v\n", config)
 
-	assetsBox, err := rice.FindBox("assets")
+	assetsFS, err := loadAssets()
 	if err != nil {
-		log.Fatalf("failed to load assets box: %v", err)
+		log.Fatalf("failed to load assets: %v", err)
 	}
-	log.Printf("Assets: appended=%v, embedded=%v", assetsBox.IsAppended(), assetsBox.IsEmbedded())
 
-	templatesBox, err := rice.FindBox("templates")
-	if err != nil {
-		log.Fatalf("failed to templates assets box: %v", err)
-	}
-	log.Printf("Templates: appended=%v, embedded=%v", templatesBox.IsAppended(), templatesBox.IsEmbedded())
-
-	t, err := loadTemplates(templatesBox)
+	t, err := loadTemplates()
 	if err != nil {
 		log.Fatalf("failed to load templates: %v", err)
 	}
@@ -56,7 +48,7 @@ func main() {
 
 	e.GET("/", defaultHandler(generator))
 	e.GET("/:query", queryHandler(generator))
-	e.GET("/_assets/*", echo.WrapHandler(http.StripPrefix("/_assets/", http.FileServer(assetsBox.HTTPBox()))))
+	e.GET("/_assets/*", echo.WrapHandler(http.StripPrefix("/_assets/", http.FileServer(http.FS(assetsFS)))))
 	e.GET("/favicon.ico", redirectHandler("/_assets/favicons/favicon.ico"))
 
 	e.Logger.Fatal(e.Start(config.Listen))
