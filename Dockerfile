@@ -11,8 +11,6 @@ ENV GOARCH=amd64
 ENV CGO_ENABLED=0
 
 RUN go get -v -t -d ./...
-RUN go get github.com/GeertJohan/go.rice/rice
-RUN go generate -v .
 RUN go build -ldflags="-s -w" -v .
 
 
