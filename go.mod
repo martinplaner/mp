@@ -5,7 +5,6 @@ go 1.16
 require (
 	github.com/go-playground/validator/v10 v10.6.0
 	github.com/labstack/echo-contrib v0.9.0
-	github.com/labstack/echo/v4 v4.2.2
-	golang.org/x/sys v0.0.0-20210227040730-b0d1d43c014d // indirect
+	github.com/labstack/echo/v4 v4.3.0
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
