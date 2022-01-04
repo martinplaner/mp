@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
-	github.com/go-playground/validator/v10 v10.9.0
+	github.com/go-playground/validator/v10 v10.10.0
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/labstack/echo-contrib v0.11.0
 	github.com/labstack/echo/v4 v4.6.1
