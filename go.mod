@@ -7,7 +7,7 @@ require (
 	github.com/go-playground/validator/v10 v10.10.0
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/labstack/echo-contrib v0.11.0
-	github.com/labstack/echo/v4 v4.6.2
+	github.com/labstack/echo/v4 v4.6.3
 	github.com/prometheus/common v0.32.1 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
