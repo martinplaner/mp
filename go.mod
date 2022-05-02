@@ -3,7 +3,7 @@ module github.com/martinplaner/mp
 go 1.18
 
 require (
-	github.com/go-playground/validator/v10 v10.10.1
+	github.com/go-playground/validator/v10 v10.11.0
 	github.com/labstack/echo-contrib v0.12.0
 	github.com/labstack/echo/v4 v4.7.2
 )
