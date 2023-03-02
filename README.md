@@ -34,8 +34,6 @@ A Docker image is available through Docker Hub: https://hub.docker.com/r/martinp
 $ docker run -it --rm -v $PWD/words.txt:/data/words.txt -p 8080:8080 martinplaner/mp:latest
 ```
 
-⚠ Don't use the old image from GitHub Packages Docker Registry (aka docker.pkg.github.com), since it is deprecated and GitHub Packages Docker Registry will sunset early next year. Unfortunately it is not possible to delete public images from GitHub Packages, so just be aware.
-
 ## Licenses
 
 ### Source code
