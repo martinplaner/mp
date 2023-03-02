@@ -65,7 +65,7 @@ func (r *Renderer) Render(w io.Writer, name string, data interface{}, c echo.Con
 // Negotiate performs content negotiation using the "Accept" header and sends a response in the appropriate content type.
 // If no content type can be negotiated, an HTTP 406 Not Acceptable error is returned.
 func Negotiate(status int, name string, data interface{}, c echo.Context) error {
-	accept := c.Request().Header.Get(http.CanonicalHeaderKey(echo.HeaderAccept))
+	accept := c.Request().Header.Get(echo.HeaderAccept)
 	var accepts []string
 	for _, a := range strings.Split(accept, ",") {
 		accepts = append(accepts, strings.TrimSpace(a))
