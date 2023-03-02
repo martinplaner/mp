@@ -1,7 +1,5 @@
 package main
 
-//go:generate rice embed-go
-
 import (
 	"log"
 	"net/http"
@@ -46,8 +44,10 @@ func main() {
 	e.Validator = NewValidator()
 	e.Renderer = NewRenderer(t)
 
-	e.GET("/", defaultHandler(generator))
-	e.GET("/:query", queryHandler(generator))
+	handler := Handler{Generator: generator}
+
+	e.GET("/", handler.rootHandler)
+	e.GET("/:query", handler.queryHandler)
 	e.GET("/_assets/*", echo.WrapHandler(http.StripPrefix("/_assets/", http.FileServer(http.FS(assetsFS)))))
 	e.GET("/favicon.ico", redirectHandler("/_assets/favicons/favicon.ico"))
 
