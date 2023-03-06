@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -14,7 +15,31 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to load config: %v", err)
 	}
-	log.Printf("Configuration: %#v\n", config)
+	if config.Debug {
+		log.Printf("Configuration: %#v\n", config)
+	}
+
+	var generator Generator
+
+	// TODO debug mode config switch
+	// if config.Mode == Adjective {
+	generator, err = AdjectiveGeneratorFromFile(config.File, " ")
+	// } else {
+	// 	generator, err = CompoundGeneratorFromFile(config.File, "-")
+	// }
+
+	if err != nil {
+		log.Fatalf("failed to create generator: %v", err)
+	}
+
+	if config.Once != "" {
+		output, err := generator.Generate(config.Once)
+		if err != nil {
+			log.Fatalf("failed to generate output: %v", err)
+		}
+		fmt.Println(output)
+		return
+	}
 
 	assetsFS, err := loadAssets()
 	if err != nil {
@@ -26,11 +51,6 @@ func main() {
 		log.Fatalf("failed to load templates: %v", err)
 	}
 	log.Printf("Loaded templates%v\n", t.DefinedTemplates())
-
-	generator, err := GeneratorFromFile(config.File, "-")
-	if err != nil {
-		log.Fatalf("failed to create generator: %v", err)
-	}
 
 	e := echo.New()
 	e.Use(middleware.Logger())
@@ -44,7 +64,10 @@ func main() {
 	e.Validator = NewValidator()
 	e.Renderer = NewRenderer(t)
 
-	handler := Handler{Generator: generator}
+	handler := Handler{
+		Generator:    generator,
+		DefaultQuery: config.DefaultQuery,
+	}
 
 	e.GET("/", handler.rootHandler)
 	e.GET("/:query", handler.queryHandler)
