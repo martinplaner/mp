@@ -9,11 +9,6 @@ import (
 )
 
 var (
-	// DefaultQueries is used to look up the language specific default query
-	DefaultQueries = map[string]string{
-		"en": "LB",
-	}
-
 	// FallbackQuery is used if no other query was specified
 	FallbackQuery = "MP"
 )
@@ -40,17 +35,25 @@ type Error struct {
 	Cause   string `json:"cause"`
 }
 
+// Handler is responsible for handling requests using handler functions.
 type Handler struct {
-	Generator *Generator
+	Generator    Generator
+	DefaultQuery string
 }
 
 func (h *Handler) rootHandler(c echo.Context) error {
-	result, err := h.Generator.Generate(strings.ToUpper(FallbackQuery))
+	query := h.DefaultQuery
+
+	if strings.TrimSpace(query) == "" {
+		query = FallbackQuery
+	}
+
+	result, err := h.Generator.Generate(strings.ToUpper(query))
 	if err != nil {
 		return err
 	}
 
-	return Negotiate(http.StatusOK, "index.tmpl", &QueryResult{Query: FallbackQuery, Result: result}, c)
+	return Negotiate(http.StatusOK, "index.tmpl", &QueryResult{Query: query, Result: result}, c)
 }
 
 func (h *Handler) queryHandler(c echo.Context) error {
