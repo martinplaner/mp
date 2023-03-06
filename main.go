@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/labstack/echo-contrib/prometheus"
 	"github.com/labstack/echo/v4"
@@ -32,7 +33,7 @@ func main() {
 	}
 
 	if config.Once != "" {
-		output, err := generator.Generate(config.Once)
+		output, err := generator.Generate(strings.ToUpper(config.Once))
 		if err != nil {
 			log.Fatalf("failed to generate output: %v", err)
 		}
