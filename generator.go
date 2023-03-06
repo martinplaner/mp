@@ -10,6 +10,8 @@ import (
 	"unicode/utf8"
 )
 
+const lineTypeDelimiter = ","
+
 // Generator generates words from a given term.
 type Generator interface {
 	Generate(term string) (string, error)
@@ -51,6 +53,12 @@ func CompoundGeneratorFromFile(path, delimiter string) (Generator, error) {
 		}
 		// normalize runes to upper case
 		rune = unicode.ToUpper(rune)
+
+		if len(strings.Split(line, lineTypeDelimiter)) > 1 {
+			// skip unsupported word type
+			continue
+		}
+
 		vocabulary[rune] = append(vocabulary[rune], line)
 	}
 
@@ -105,14 +113,12 @@ func AdjectiveGeneratorFromFile(path, delimiter string) (Generator, error) {
 		}
 		// normalize runes to upper case
 		rune = unicode.ToUpper(rune)
-		split := strings.Split(line, ",")
+		split := strings.Split(line, lineTypeDelimiter)
 
 		if len(split) == 1 {
 			nouns[rune] = append(nouns[rune], split[0])
 		} else if len(split) > 1 && split[1] == "a" {
 			adjectives[rune] = append(adjectives[rune], split[0])
-		} else {
-			return nil, fmt.Errorf("unknown word type: %v", split[1])
 		}
 	}
 

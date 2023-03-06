@@ -27,13 +27,13 @@ const (
 	Adjective Mode = 1
 )
 
-func (m Mode) Set(value string) error {
+func (m *Mode) Set(value string) error {
 	switch value {
 	case "a", "adjective":
-		m = Adjective
+		*m = Adjective
 		return nil
 	case "c", "compound":
-		m = Compound
+		*m = Compound
 		return nil
 	}
 

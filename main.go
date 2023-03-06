@@ -21,12 +21,11 @@ func main() {
 
 	var generator Generator
 
-	// TODO debug mode config switch
-	// if config.Mode == Adjective {
-	generator, err = AdjectiveGeneratorFromFile(config.File, " ")
-	// } else {
-	// 	generator, err = CompoundGeneratorFromFile(config.File, "-")
-	// }
+	if config.Mode == Adjective {
+		generator, err = AdjectiveGeneratorFromFile(config.File, " ")
+	} else {
+		generator, err = CompoundGeneratorFromFile(config.File, "-")
+	}
 
 	if err != nil {
 		log.Fatalf("failed to create generator: %v", err)
