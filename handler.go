@@ -9,8 +9,8 @@ import (
 )
 
 var (
-	// DefaultQuery is used if no other query was specified
-	DefaultQuery = "MP"
+	// FallbackQuery is used if no other query was specified
+	FallbackQuery = "MP"
 )
 
 // RequestParams contains all request parameters
@@ -35,38 +35,46 @@ type Error struct {
 	Cause   string `json:"cause"`
 }
 
-func defaultHandler(g *Generator) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		result, err := g.Generate(strings.ToUpper(DefaultQuery))
-		if err != nil {
-			return err
-		}
-
-		return Negotiate(http.StatusOK, "index.tmpl", &QueryResult{Query: DefaultQuery, Result: result}, c)
-	}
+// Handler is responsible for handling requests using handler functions.
+type Handler struct {
+	Generator    Generator
+	DefaultQuery string
 }
 
-func queryHandler(g *Generator) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		req := new(RequestParams)
-		if err := c.Bind(req); err != nil {
-			return err
-		}
-		if err := c.Validate(req); err != nil {
-			return err
-		}
+func (h *Handler) rootHandler(c echo.Context) error {
+	query := h.DefaultQuery
 
-		query := strings.ToUpper(req.Query)
-		result, err := g.Generate(query)
-		if err != nil {
-			return &echo.HTTPError{
-				Code:     http.StatusNotFound,
-				Message:  fmt.Sprintf("Could not generate word for query '%v'.", query),
-				Internal: err,
-			}
-		}
-		return Negotiate(http.StatusOK, "index.tmpl", &QueryResult{Query: query, Result: result}, c)
+	if strings.TrimSpace(query) == "" {
+		query = FallbackQuery
 	}
+
+	result, err := h.Generator.Generate(strings.ToUpper(query))
+	if err != nil {
+		return err
+	}
+
+	return Negotiate(http.StatusOK, "index.tmpl", &QueryResult{Query: query, Result: result}, c)
+}
+
+func (h *Handler) queryHandler(c echo.Context) error {
+	req := new(RequestParams)
+	if err := c.Bind(req); err != nil {
+		return err
+	}
+	if err := c.Validate(req); err != nil {
+		return err
+	}
+
+	query := strings.ToUpper(req.Query)
+	result, err := h.Generator.Generate(query)
+	if err != nil {
+		return &echo.HTTPError{
+			Code:     http.StatusNotFound,
+			Message:  fmt.Sprintf("Could not generate word for query '%v'.", query),
+			Internal: err,
+		}
+	}
+	return Negotiate(http.StatusOK, "index.tmpl", &QueryResult{Query: query, Result: result}, c)
 }
 
 func redirectHandler(target string) echo.HandlerFunc {

@@ -7,21 +7,21 @@ import (
 func TestGenerator_Generate(t *testing.T) {
 	tests := []struct {
 		name    string
-		g       *Generator
+		g       Generator
 		term    string
 		want    string
 		wantErr bool
 	}{
 		{
 			name:    "empty string",
-			g:       &Generator{},
+			g:       &CompoundGenerator{},
 			term:    "",
 			want:    "",
 			wantErr: false,
 		},
 		{
 			name: "Alpha-Bravo",
-			g: &Generator{
+			g: &CompoundGenerator{
 				vocabulary: map[rune][]string{
 					rune('A'): {"Alpha"},
 					rune('B'): {"Bravo"},
@@ -34,7 +34,36 @@ func TestGenerator_Generate(t *testing.T) {
 		},
 		{
 			name:    "unknown rune",
-			g:       &Generator{},
+			g:       &CompoundGenerator{},
+			term:    "A",
+			want:    "",
+			wantErr: true,
+		},
+		{
+			name:    "empty string",
+			g:       &AdjectiveGenerator{},
+			term:    "",
+			want:    "",
+			wantErr: false,
+		},
+		{
+			name: "alpha-y bravo",
+			g: &AdjectiveGenerator{
+				adjectives: map[rune][]string{
+					rune('A'): {"alpha"},
+				},
+				nouns: map[rune][]string{
+					rune('B'): {"bravo"},
+				},
+				delimiter: " ",
+			},
+			term:    "AB",
+			want:    "alpha bravo",
+			wantErr: false,
+		},
+		{
+			name:    "unknown rune",
+			g:       &AdjectiveGenerator{},
 			term:    "A",
 			want:    "",
 			wantErr: true,
@@ -61,26 +90,40 @@ func TestGeneratorFromFile(t *testing.T) {
 	}
 	tests := []struct {
 		name    string
+		factory func(string, string) (Generator, error)
 		args    args
+		term    string
 		wantErr bool
 	}{
 		{
-			name: "full word list",
+			name:    "full word list",
+			factory: AdjectiveGeneratorFromFile,
 			args: args{
-				path:      "words.txt",
+				path:      "words_en.txt",
+				delimiter: " ",
+			},
+			term:    "LB",
+			wantErr: false,
+		},
+		{
+			name:    "full word list",
+			factory: CompoundGeneratorFromFile,
+			args: args{
+				path:      "words_de.txt",
 				delimiter: "-",
 			},
+			term:    "MP",
 			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := GeneratorFromFile(tt.args.path, tt.args.delimiter)
+			got, err := tt.factory(tt.args.path, tt.args.delimiter)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GeneratorFromFile() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			s, err := got.Generate("ABC")
+			s, err := got.Generate(tt.term)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Generate() error = %v, wantErr %v", err, tt.wantErr)
 				return
