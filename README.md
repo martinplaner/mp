@@ -44,7 +44,7 @@ $ docker run -it --rm -v $PWD/words.txt:/data/words.txt -p 8080:8080 martinplane
 
 ### Source code
 
-Copyright 2020 Martin Planer. All rights reserved. Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
+Copyright 2023 Martin Planer. All rights reserved. Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
 ### Word list (words_de.txt)
 
