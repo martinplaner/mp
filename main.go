@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/labstack/echo-contrib/prometheus"
+	"github.com/labstack/echo-contrib/echoprometheus"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -56,10 +56,7 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.Use(middleware.RequestID())
-
-	p := prometheus.NewPrometheus("mp", nil)
-	p.MetricsPath = "_metrics"
-	p.Use(e)
+	e.Use(echoprometheus.NewMiddleware("mp"))
 
 	e.Validator = NewValidator()
 	e.Renderer = NewRenderer(t)
@@ -73,6 +70,7 @@ func main() {
 	e.GET("/:query", handler.queryHandler)
 	e.GET("/_assets/*", echo.WrapHandler(http.StripPrefix("/_assets/", http.FileServer(http.FS(assetsFS)))))
 	e.GET("/favicon.ico", redirectHandler("/_assets/favicons/favicon.ico"))
+	e.GET("/_metrics", echoprometheus.NewHandler())
 
 	e.Logger.Fatal(e.Start(config.Listen))
 }
