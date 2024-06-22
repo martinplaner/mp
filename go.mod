@@ -1,6 +1,6 @@
 module github.com/martinplaner/mp
 
-go 1.22
+go 1.22.4
 
 require (
 	github.com/go-playground/validator/v10 v10.22.0
