@@ -15,7 +15,7 @@ jobs:
       - name: Set up Go 1.x
         uses: actions/setup-go@v5
         with:
-          go-version: 'stable'
+          go-version: "stable"
 
       - name: Get dependencies
         run: go get -v -t -d ./...
@@ -41,3 +41,5 @@ jobs:
           pull: true
           push: true
           tags: martinplaner/mp:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
