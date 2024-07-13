@@ -10,7 +10,7 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}",
-            "args": ["-file", "${workspaceFolder}/words_de.txt"]
+            "args": ["-listen", "localhost:8080", "-file", "${workspaceFolder}/words_de.txt"]
         }
     ]
 }
