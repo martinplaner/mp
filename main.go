@@ -71,6 +71,9 @@ func main() {
 	e.GET("/_assets/*", echo.WrapHandler(http.StripPrefix("/_assets/", http.FileServer(http.FS(assetsFS)))))
 	e.GET("/favicon.ico", redirectHandler("/_assets/favicons/favicon.ico"))
 	e.GET("/_metrics", echoprometheus.NewHandler())
+	e.GET("/htmx", func(c echo.Context) error {
+		return c.Render(http.StatusOK, "htmx.tmpl", &QueryResult{Query: "MP", Result: "XXXXX"})
+	})
 
 	e.Logger.Fatal(e.Start(config.Listen))
 }
