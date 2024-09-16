@@ -2,11 +2,11 @@
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/martinplaner/mp)](https://goreportcard.com/report/github.com/martinplaner/mp)
 
-Highly sophisticated [initialism](https://en.wikipedia.org/wiki/Acronym#Nomenclature) to hyphenated [compound words](https://en.wikipedia.org/wiki/Compound_(linguistics)) generator.
+Highly sophisticated [initialism](https://en.wikipedia.org/wiki/Acronym#Nomenclature) to hyphenated [compound words](<https://en.wikipedia.org/wiki/Compound_(linguistics)>) generator.
 
 ## Example
 
-*MP* -> *Melanchton-Paralogismus*
+_MP_ -> _Melanchton-Paralogismus_
 
 ## Disclaimer
 
@@ -34,7 +34,7 @@ The `PORT` environment variable can also be used to set the default listening po
 
 ### Docker
 
-A Docker image is available through Docker Hub: https://hub.docker.com/r/martinplaner/mp 
+A Docker image is available through Docker Hub: https://hub.docker.com/r/martinplaner/mp
 
 ```
 $ docker run -it --rm -v $PWD/words.txt:/data/words.txt -p 8080:8080 martinplaner/mp:latest
@@ -58,7 +58,7 @@ Part 2: Extracted from Dwarf Fortress file `raw/objects/language_words.txt`, als
 
 ### Twemoji (Favicon)
 
-Copyright 2019 Twitter, Inc and other contributors. 
+Copyright 2019 Twitter, Inc and other contributors.
 
 Code licensed under the MIT License: <http://opensource.org/licenses/MIT>
 
