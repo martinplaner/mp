@@ -5,7 +5,7 @@ go 1.26.0
 require (
 	github.com/go-playground/validator/v10 v10.30.5
 	github.com/labstack/echo-contrib v0.50.1
-	github.com/labstack/echo/v4 v4.15.4
+	github.com/labstack/echo/v4 v4.16.0
 )
 
 require (
